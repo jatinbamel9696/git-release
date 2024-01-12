@@ -1,32 +1,71 @@
 import argparse
 import logging
+import requests
+import yaml  # Add this line
+from requests.auth import HTTPBasicAuth
 from config.getconfig import getConfig
-from pagesController import searchPages, deletePages
-from pagesPublisher import publishGitRelease, publishFolder
 
 logging.basicConfig(level=logging.INFO)
 
-# Parse arguments with LOGIN and PASSWORD for Confluence
-parser = argparse.ArgumentParser()
-parser.add_argument('--login', help='Login with "" is mandatory', required=True)
-parser.add_argument('--password', help='Password with "" is mandatory', required=True)
-args = parser.parse_args()
-inputArguments = vars(args)
+def getConfig():
+    with open("./publisher/config/config.yaml", "r") as yamlFileConfig:
+        return yaml.safe_load(yamlFileConfig)
 
 CONFIG = getConfig()
 
-logging.debug(CONFIG)
+def searchPages(login, password, title):
+    logging.info("Searching for pages with title: " + title)
+    # Your search implementation here
+    # Use the Confluence REST API to search for pages
 
-# Search for existing pages with the specified search pattern
-pages = searchPages(login=inputArguments['login'], password=inputArguments['password'])
+def deletePages(pagesIDList, login, password):
+    logging.info("Deleting pages: " + str(pagesIDList))
+    # Your delete implementation here
+    # Use the Confluence REST API to delete pages
 
-# Delete existing pages to ensure a clean slate
-deletePages(pagesIDList=pages, login=inputArguments['login'], password=inputArguments['password'])
+def createPage(title, content, parentPageID, login, password):
+    logging.info("Creating a new page: " + title)
+    # Your create implementation here
+    # Use the Confluence REST API to create a new page
 
-# Publish Git release information to Confluence
-publishGitRelease(login=inputArguments['login'], password=inputArguments['password'])
+def fetchGitHubReleaseNotes(token, owner, repo):
+    headers = {'Authorization': f'token {token}'}
+    response = requests.get(f'https://api.github.com/repos/{owner}/{repo}/releases/latest', headers=headers)
 
-# Publish pages from the specified folder
-publishFolder(folder=str(CONFIG["github_folder_with_md_files"]),
-              login=inputArguments['login'],
-              password=inputArguments['password'])
+    if response.status_code == 200:
+        release_data = response.json()
+        return release_data.get('body', '')
+    else:
+        logging.error(f"Failed to fetch GitHub release notes. Status code: {response.status_code}")
+        return None
+
+def publishGitHubReleaseToConfluence(login, password, github_token, owner, repo):
+    release_notes = fetchGitHubReleaseNotes(token=github_token, owner=owner, repo=repo)
+
+    if release_notes is not None:
+        search_result = searchPages(login=login, password=password, title=CONFIG["CONFLUENCE_PAGE_TITLE"])
+
+        if search_result:
+            deletePages(pagesIDList=search_result, login=login, password=password)
+
+        createPage(title=CONFIG["CONFLUENCE_PAGE_TITLE"],
+                   content=release_notes,
+                   parentPageID=CONFIG["CONFLUENCE_PARENT_PAGE_ID"],
+                   login=login,
+                   password=password)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--login', help='Login with "" is mandatory', required=True)
+    parser.add_argument('--password', help='Password with "" is mandatory', required=True)
+    parser.add_argument('--github-token', help='GitHub token for authentication', required=True)
+    parser.add_argument('--github-owner', help='GitHub repository owner', required=True)
+    parser.add_argument('--github-repo', help='GitHub repository name', required=True)
+    args = parser.parse_args()
+    input_arguments = vars(args)
+
+    publishGitHubReleaseToConfluence(login=input_arguments['login'],
+                                     password=input_arguments['password'],
+                                     github_token=input_arguments['github_token'],
+                                     owner=input_arguments['github_owner'],
+                                     repo=input_arguments['github_repo'])
