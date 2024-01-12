@@ -25,7 +25,7 @@ jobs:
 
     - name: Update Confluence
       run: |
-        python update_confluence.py ${{ secrets.CONFLUENCE_USERNAME }} ${{ secrets.CONFLUENCE_PASSWORD }} \
+        python git-release/update_confluence.py ${{ secrets.CONFLUENCE_USERNAME }} ${{ secrets.CONFLUENCE_PASSWORD }} \
           ${{ secrets.CONFLUENCE_PAGE_ID }} https://jatin-bamel.atlassian.net/wiki/rest/api/ \
           testj3 131729 ${{ github.event.client_payload.release.tag_name }}
       env:
