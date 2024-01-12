@@ -110,7 +110,8 @@ def searchPages(login, password):
     logging.debug(json.dumps(json.loads(response.text), indent=4, sort_keys=True))
 
     # extract page's IDs from response JSON
-    results = json.loads(response.text)
+    #results = json.loads(response.text)
+    results = json.loads(response.text) if response.text else {}
     foundPages = []
 
     for result in results['results']:
