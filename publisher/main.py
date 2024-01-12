@@ -1,7 +1,7 @@
 import argparse
 import logging
 import requests
-import yaml  # Add this line
+import yaml
 from requests.auth import HTTPBasicAuth
 from config.getconfig import getConfig
 
@@ -39,8 +39,12 @@ def fetchGitHubReleaseNotes(token, owner, repo):
         logging.error(f"Failed to fetch GitHub release notes. Status code: {response.status_code}")
         return None
 
-def publishGitHubReleaseToConfluence(login, password, github_token, owner, repo):
-    release_notes = fetchGitHubReleaseNotes(token=github_token, owner=owner, repo=repo)
+def publishGitHubReleaseToConfluence(login, password):
+    github_token = CONFIG.get("GITHUB_TOKEN")
+    github_owner = CONFIG.get("GITHUB_OWNER")
+    github_repo = CONFIG.get("GITHUB_REPO")
+
+    release_notes = fetchGitHubReleaseNotes(token=github_token, owner=github_owner, repo=github_repo)
 
     if release_notes is not None:
         search_result = searchPages(login=login, password=password, title=CONFIG["CONFLUENCE_PAGE_TITLE"])
@@ -58,14 +62,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--login', help='Login with "" is mandatory', required=True)
     parser.add_argument('--password', help='Password with "" is mandatory', required=True)
-    parser.add_argument('--github-token', help='GitHub token for authentication', required=True)
-    parser.add_argument('--github-owner', help='GitHub repository owner', required=True)
-    parser.add_argument('--github-repo', help='GitHub repository name', required=True)
     args = parser.parse_args()
     input_arguments = vars(args)
 
     publishGitHubReleaseToConfluence(login=input_arguments['login'],
-                                     password=input_arguments['password'],
-                                     github_token=input_arguments['github_token'],
-                                     owner=input_arguments['github_owner'],
-                                     repo=input_arguments['github_repo'])
+                                     password=input_arguments['password'])
