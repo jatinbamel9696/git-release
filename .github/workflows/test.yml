@@ -1,0 +1,17 @@
+name: Update Confluence
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  update-confluence:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract Release Information
+        run: |
+          echo "Release Tag: ${{ github.event.release.tag_name }}"
+          echo "Release Title: ${{ github.event.release.name }}"
+          echo "Release Description: ${{ github.event.release.body }}"
