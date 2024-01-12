@@ -1,0 +1,38 @@
+name: Publish
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        ls -la
+        python -m pip install --upgrade pip
+        pip install -r ./publisher/requirements.txt
+    - name: Publish MD files to the Confluence space
+      env:
+        #LOGIN: ${{secrets.confluence_login }}
+        #PASSWORD: ${{secrets.confluence_password }}
+        LOGIN: jatsingh9696@gmail.com
+        PASSWORD: ATATT3xFfGF0ZwRpXf8WhR6D0SgTVcaWgyIeFAdsPeFIxLbapNDu0XbWGhDrcZ-8F4QKOL5TfvSpa0qYZz_OODFVngAP1Ej6OGySl68n3i0ZTCeAPIzDfsdUg0RcCH2JTXZzHhwINXoqArLgWfQgZvCYfOH6mum0JLXAbV1xKi-2xH52Vu_9gCM=9B8E2AB3
+      run: |
+        python3 ./publisher/main.py --login="$LOGIN" --password="$PASSWORD"
